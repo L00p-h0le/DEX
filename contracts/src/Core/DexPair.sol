@@ -8,6 +8,7 @@ import {ERC20} from "../../lib/solady/src/tokens/ERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IDexCallee} from "./interfaces/IDexCallee.sol";
 
 contract DexPair is IDexPair , ERC20 , ReentrancyGuard {
 
@@ -34,10 +35,11 @@ contract DexPair is IDexPair , ERC20 , ReentrancyGuard {
     error Overflow();
     error Insufficient_LiquidityMinted();
     error Insufficient_LiquidityBurned();
-
-    event Sync(uint112 reserve0 , uint112 reserve1);
-    event Mint(address indexed sender , uint amount0 , uint amount1);
-    event Burn(address indexed sender , uint amount0 , uint amount1 , address indexed to);
+    error Insufficient_OutputAmount();
+    error Insufficient_InputAmount();
+    error Insufficient_Liquidity();
+    error InvalidAddress();
+    error InvariantError();
 
     function getReserve() public view returns(uint112 _reserve0 , uint112 _reserve1 , uint32 _blockTimeStampLast){
         _reserve0 = reserve0;
@@ -72,6 +74,7 @@ contract DexPair is IDexPair , ERC20 , ReentrancyGuard {
                 price1CumulativeLast += uint(UQ112x112.encode(_reserve0).uqdiv(_reserve1)) * timeElapsed;
             }
         }
+
         // forge-lint: disable-next-line(unsafe-typecast)
         reserve0 = uint112(balance0);
         // forge-lint: disable-next-line(unsafe-typecast)
@@ -121,7 +124,7 @@ contract DexPair is IDexPair , ERC20 , ReentrancyGuard {
         bool feeOn = mintFee(_reserve0 , _reserve1);
 
         uint _totalSupply = totalSupply();
-        
+
         if(liquidity == 0) revert Insufficient_LiquidityBurned();
 
         amount0 = liquidity * (balance0) / _totalSupply;
@@ -140,6 +143,43 @@ contract DexPair is IDexPair , ERC20 , ReentrancyGuard {
         if(feeOn) kLast = uint(reserve0) * (reserve1);
         emit Burn(msg.sender , amount0 , amount1 , to);
 
+    }
+
+    function swap(uint amount0Out , uint amount1Out , address to , bytes calldata data) external nonReentrant {
+        if(amount0Out == 0 && amount1Out == 0) revert Insufficient_OutputAmount();
+        (uint112 _reserve0 , uint112 _reserve1,) = getReserve();
+
+        if(amount0Out > _reserve0 || amount1Out > _reserve1) revert Insufficient_Liquidity();
+
+        uint balance0;
+        uint balance1;
+
+        {
+            address _token0 = token0;
+            address _token1 = token1;
+
+            if(to == _token0 || to == _token1) revert InvalidAddress();
+
+            if(amount0Out > 0) IERC20(_token0).safeTransfer(to , amount0Out);
+            if(amount1Out > 0) IERC20(_token1).safeTransfer(to , amount1Out);
+            if(data.length > 0) IDexCallee(to).dexV2Call(msg.sender , amount0Out , amount1Out , data);
+            balance0 = IERC20(_token0).balanceOf(address(this));
+            balance1 = IERC20(_token1).balanceOf(address(this));
+        }
+
+        uint amount0In = balance0 > _reserve0 - amount0Out ? balance0 - (_reserve0 - amount0Out) : 0;
+        uint amount1In = balance1 > _reserve1 - amount1Out ? balance1 - (_reserve1 - amount1Out) : 0;
+        if(amount0In == 0 && amount1In == 0) revert Insufficient_InputAmount();
+
+        {
+            uint balance0Adjusted = (balance0 * 1000) - (amount0In * 3);
+            uint balance1Adjusted = (balance1 * 1000) - (amount1In * 3);
+
+            if(balance0Adjusted * balance1Adjusted < uint256(_reserve0) * uint256(_reserve1) * (1000**2)) revert InvariantError();
+        }
+
+        update(balance0 , balance1 , _reserve0 , _reserve1);
+        emit Swap(msg.sender , amount0In , amount1In , amount0Out , amount1Out , to);
     }
 
     function name() public pure override returns (string memory) {

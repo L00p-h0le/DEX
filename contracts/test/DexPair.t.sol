@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {Test} from "forge-std/Test.sol";
 
 import {DexPair} from "../src/Core/DexPair.sol";
+import {IDexPair} from "../src/Core/interfaces/IDexPair.sol";
 import {ERC20Mock} from "../src/Mocks/MockERC20.sol";
 
 contract DexPairTest is Test {
@@ -50,6 +51,16 @@ contract DexPairTest is Test {
 
         vm.stopPrank();
     }
+
+    function _addInitialLiquidity() internal {
+        token0.mint(address(this), 100 ether);
+        token1.mint(address(this), 100 ether);
+
+        token0.transfer(address(pair), 100 ether);
+        token1.transfer(address(pair), 100 ether);
+
+        pair.mint(address(this));
+}
 
     function testMintInitialLiquidity() public {
 
@@ -180,6 +191,119 @@ contract DexPairTest is Test {
         );
 
         pair.burn(alice);
+    }
+
+    //Swap Test
+
+    function testSwapToken0ForToken1() public {
+        _addInitialLiquidity();
+
+        uint amountIn = 10 ether;
+        uint amountOut = 9 ether; // valid amount
+
+        token0.mint(address(this), amountIn);
+        token0.transfer(address(pair), amountIn);
+
+        uint token1Before = token1.balanceOf(address(this));
+
+        pair.swap(0, amountOut, address(this), "");
+
+        uint token1After = token1.balanceOf(address(this));
+
+        assertEq(token1After - token1Before, amountOut);
+
+        (uint112 reserve0, uint112 reserve1,) = pair.getReserve();
+
+        assertEq(reserve0, 110 ether);
+        assertEq(reserve1, 91 ether);
+    }
+
+    function testSwapToken1ForToken0() public {
+        _addInitialLiquidity();
+
+        uint amountIn = 10 ether;
+        uint amountOut = 9 ether;
+
+        token1.mint(address(this), amountIn);
+        token1.transfer(address(pair), amountIn);
+
+        uint token0Before = token0.balanceOf(address(this));
+
+        pair.swap(amountOut, 0, address(this), "");
+
+        uint token0After = token0.balanceOf(address(this));
+
+        assertEq(token0After - token0Before, amountOut);
+
+        (uint112 reserve0, uint112 reserve1,) = pair.getReserve();
+
+        assertEq(reserve0, 91 ether);
+        assertEq(reserve1, 110 ether);
+    }
+
+    function testSwapMaintainsKInvariant() public {
+        _addInitialLiquidity();
+
+        (uint112 reserve0Before, uint112 reserve1Before,) = pair.getReserve();
+
+        uint oldK = uint(reserve0Before) * uint(reserve1Before);
+
+        token0.mint(address(this), 10 ether);
+        token0.transfer(address(pair), 10 ether);
+
+        pair.swap(0, 9 ether, address(this), "");
+
+        (uint112 reserve0After, uint112 reserve1After,) = pair.getReserve();
+
+        uint newK = uint(reserve0After) * uint(reserve1After);
+
+        assertGe(newK, oldK);
+    }
+
+    function testSwapRevertZeroOutputs() public {
+        _addInitialLiquidity();
+
+        vm.expectRevert(DexPair.Insufficient_OutputAmount.selector);
+
+        pair.swap(0, 0, address(this), "");
+    }
+
+    function testSwapRevertOutputGreaterThanReserve() public {
+        _addInitialLiquidity();
+
+        vm.expectRevert(DexPair.Insufficient_Liquidity.selector);
+
+        pair.swap(0, 101 ether, address(this), "");
+    }
+
+    function testSwapRevertNoInputProvided() public {
+        _addInitialLiquidity();
+
+        vm.expectRevert(DexPair.Insufficient_InputAmount.selector);
+
+        pair.swap(0, 5 ether, address(this), "");
+    }
+
+    function testSwapRevertToToken0() public {
+        _addInitialLiquidity();
+
+        token0.mint(address(this), 10 ether);
+        token0.transfer(address(pair), 10 ether);
+
+        vm.expectRevert(DexPair.InvalidAddress.selector);
+
+        pair.swap(0, 5 ether, address(token0), "");
+    }
+
+    function testSwapRevertToToken1() public {
+        _addInitialLiquidity();
+
+        token0.mint(address(this), 10 ether);
+        token0.transfer(address(pair), 10 ether);
+
+        vm.expectRevert(DexPair.InvalidAddress.selector);
+
+        pair.swap(0, 5 ether, address(token1), "");
     }
 
 }
