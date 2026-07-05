@@ -3,12 +3,15 @@ pragma solidity ^0.8.20;
 
 import {Test} from "forge-std/Test.sol";
 
+
 import {DexPair} from "../src/Core/DexPair.sol";
+import {DexFactory} from "../src/Core/DexFactory.sol";
 import {IDexPair} from "../src/Core/interfaces/IDexPair.sol";
 import {ERC20Mock} from "../src/Mocks/MockERC20.sol";
 
 contract DexPairTest is Test {
 
+    DexFactory factory;
     DexPair pair;
 
     ERC20Mock token0;
@@ -19,15 +22,15 @@ contract DexPairTest is Test {
 
     function setUp() public {
 
+        factory = new DexFactory(address(this));
+
         // Deploy mock tokens
         token0 = new ERC20Mock("Token0", "TK0");
         token1 = new ERC20Mock("Token1", "TK1");
 
         // Deploy pair
-        pair = new DexPair();
-
-        // Initialize pair
-        pair.initialise(address(token0), address(token1));
+        address pairAddress = factory.createPair(address(token0), address(token1));
+        pair = DexPair(pairAddress);
 
         // Mint tokens
         token0.mint(alice, 1000 ether);
