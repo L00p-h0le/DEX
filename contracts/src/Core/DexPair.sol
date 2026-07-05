@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {IDexPair} from "./interfaces/IDexPair.sol";
+import {IDexFactory} from "./interfaces/IDexFactory.sol";
 import {Math} from "../Periphery/libraries/Math.sol";
 import {UQ112x112} from "../Periphery/libraries/UQ112x112.sol";
 import {ERC20} from "../../lib/solady/src/tokens/ERC20.sol";
@@ -62,6 +63,27 @@ contract DexPair is IDexPair , ERC20 , ReentrancyGuard {
 
     function mintFee(uint112 _reserve0 , uint112 _reserve1) private returns(bool feeOn){
 
+        address feeTo = IDexFactory(factory).feeTo();
+        feeOn = feeTo != address(0);
+        uint _kLast = kLast;
+    
+        if(feeOn) {
+            if(_kLast != 0){
+                uint rootK = Math.sqrt(uint256(_reserve0) * uint256(_reserve1));
+                uint rookKLast = Math.sqrt(_kLast);
+
+                uint _totalSupply = totalSupply();
+                if(rootK > rookKLast){
+                    uint numerator = _totalSupply * (rootK - rookKLast);
+                    uint denominator = rootK * 5 + rookKLast;
+                    uint liquidity = numerator / denominator;
+
+                    if(liquidity > 0) _mint(feeTo , liquidity);
+                }
+            }                
+        } else if (_kLast != 0){    
+            kLast = 0;
+        }
     }
 
     function update(uint balance0 , uint balance1 , uint112 _reserve0 , uint112 _reserve1) private{
