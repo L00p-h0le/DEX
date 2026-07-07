@@ -136,7 +136,7 @@ contract DexOracleTest is Test {
         assertTrue(price1Average > initialPrice); // Price 1 went up
     }
 
-    function testConsultWithoutUpdateDoesNotRevert() public {
+    function testConsultWithoutUpdateDoesNotRevert() public view {
         // Call consult() without calling update() first (after constructor)
         // Should not revert and should return 0 based on uninitialized averages
         uint amountOut0 = oracle.consult(token0, 1 ether);
