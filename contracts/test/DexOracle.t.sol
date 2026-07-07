@@ -43,7 +43,7 @@ contract DexOracleTest is Test {
         vm.stopPrank();
 
         // Advance time a bit to avoid blockTimestamp = 0 issues if any
-        vm.warp(block.timestamp + 10);
+        vm.warp(1 hours);
         
         oracle = new DexOracle(address(factory), token0, token1);
     }
@@ -110,7 +110,7 @@ contract DexOracleTest is Test {
     
     function testUpdateWithPriceChange() public {
         // 1. Initial state: 100 ether of each token. Ratio 1:1.
-        vm.warp(block.timestamp + 12 hours);
+        vm.warp(block.timestamp + oracle.PERIOD() + 1);
         
         // 2. Someone swaps, changing the reserves and price
         vm.startPrank(alice);
@@ -119,7 +119,7 @@ contract DexOracleTest is Test {
         vm.stopPrank();
         
         // 3. Advance time to complete the 24 hour period
-        vm.warp(block.timestamp + 12 hours);
+        vm.warp(block.timestamp + oracle.PERIOD() + 1);
         
         oracle.update();
         
@@ -148,7 +148,7 @@ contract DexOracleTest is Test {
     
     function testConsecutiveUpdates() public {
         // First update
-        vm.warp(block.timestamp + 24 hours);
+        vm.warp(block.timestamp + oracle.PERIOD() + 1);
         oracle.update();
         
         uint224 price0First = oracle.price0Average();
@@ -160,7 +160,7 @@ contract DexOracleTest is Test {
         vm.stopPrank();
         
         // Advance exactly PERIOD for second update
-        vm.warp(block.timestamp + 24 hours);
+        vm.warp(block.timestamp + oracle.PERIOD() + 1);
         oracle.update();
         
         uint224 price0Second = oracle.price0Average();

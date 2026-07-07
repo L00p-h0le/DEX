@@ -25,7 +25,7 @@ library DexLibrary {
             hex'ff' , 
             factory , 
             keccak256(abi.encodePacked(token0 , token1)),
-            hex'd36c237a5453f193a629d9db5eaf8e02cab8b683d7e44ca2ef73a406c96785c7'
+            hex'b5a099064a9f7c2a3b51200d0313d1e5be1698f177620b38a7c19394132dc417'
             )))));
     }
 

@@ -59,7 +59,7 @@ contract DexOracle {
            timeElapsed = blockTimestamp - blockTimestampLast; 
         }
 
-        if(timeElapsed< PERIOD) revert Period_NotElapsed();
+        if(timeElapsed < PERIOD) revert Period_NotElapsed();
 
         unchecked{
             price0Average = (uint224((price0Cumulative - price0CumulativeLast) / timeElapsed));

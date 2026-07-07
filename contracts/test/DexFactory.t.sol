@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {Test} from "forge-std/Test.sol";
+import {console} from "forge-std/console.sol";
 
 import {DexFactory} from "../src/Core/DexFactory.sol";
 import {DexPair} from "../src/Core/DexPair.sol";
@@ -27,6 +28,7 @@ contract DexFactoryTest is Test {
         tokenB = new ERC20Mock("TokenB", "B");
         tokenC = new ERC20Mock("TokenC", "C");
     }
+
 
     function testConstructorSetsFeeToSetter() public view {
         assertEq(factory.feeToSetter(), feeSetter);
