@@ -7,10 +7,12 @@ import {DexLibrary} from './libraries/DexLibrary.sol';
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-
+/// @title DexRouter
+/// @notice Router for interacting with the DEX, handling liquidity management and token swaps
 contract DexRouter {
     using SafeERC20 for IERC20;
 
+    /// @notice The factory contract address
     address public immutable factory;
     
     error Expired();
@@ -19,16 +21,29 @@ contract DexRouter {
     error Insufficient_OutputAmount();
     error Excessive_InputAmount();
 
+    /// @notice Modifier to ensure the transaction is executed before the deadline
+    /// @param deadline The timestamp after which the transaction will revert
     modifier ensure(uint deadline) {
         if(deadline < block.timestamp) revert Expired();
         _;
     }
 
+    /// @notice Constructs the router with the factory address
+    /// @param _factory The address of the DexFactory
     constructor(address _factory){
         factory = _factory;
     }
 
     // **** ADD LIQUIDITY ****
+    /// @notice Internal helper to calculate optimal liquidity amounts
+    /// @param tokenA The first token address
+    /// @param tokenB The second token address
+    /// @param amountADesired The desired amount of tokenA
+    /// @param amountBDesired The desired amount of tokenB
+    /// @param amountAMin The minimum acceptable amount of tokenA
+    /// @param amountBMin The minimum acceptable amount of tokenB
+    /// @return amountA The optimal amount of tokenA
+    /// @return amountB The optimal amount of tokenB
     function _addLiquidity(
         address tokenA,
         address tokenB,
@@ -60,6 +75,18 @@ contract DexRouter {
         }
     }
 
+    /// @notice Adds liquidity to a pair
+    /// @param tokenA The first token address
+    /// @param tokenB The second token address
+    /// @param amountADesired The desired amount of tokenA
+    /// @param amountBDesired The desired amount of tokenB
+    /// @param amountAMin The minimum acceptable amount of tokenA
+    /// @param amountBMin The minimum acceptable amount of tokenB
+    /// @param to The recipient of the liquidity tokens
+    /// @param deadline The transaction deadline
+    /// @return amountA The actual amount of tokenA deposited
+    /// @return amountB The actual amount of tokenB deposited
+    /// @return liquidity The amount of liquidity tokens minted
     function addLiquidity(
         address tokenA,
         address tokenB,
@@ -81,6 +108,16 @@ contract DexRouter {
     }
 
     // **** REMOVE LIQUIDITY ****
+    /// @notice Removes liquidity from a pair
+    /// @param tokenA The first token address
+    /// @param tokenB The second token address
+    /// @param liquidity The amount of liquidity tokens to burn
+    /// @param amountAMin The minimum acceptable amount of tokenA returned
+    /// @param amountBMin The minimum acceptable amount of tokenB returned
+    /// @param to The recipient of the withdrawn tokens
+    /// @param deadline The transaction deadline
+    /// @return amountA The actual amount of tokenA returned
+    /// @return amountB The actual amount of tokenB returned
     function removeLiquidity(
         address tokenA,
         address tokenB,
@@ -101,7 +138,10 @@ contract DexRouter {
  
 
     // **** SWAP ****
-    // requires the initial amount to have already been sent to the first pair
+    /// @notice Internal helper to execute a chain of swaps
+    /// @param amounts Array of amounts to swap at each step
+    /// @param path Array of token addresses representing the routing path
+    /// @param _to The final recipient address
     function _swap(uint[] memory amounts, address[] memory path, address _to) internal virtual {
         for (uint i; i < path.length - 1; i++) {
 
@@ -117,6 +157,13 @@ contract DexRouter {
         }
     }
 
+    /// @notice Swaps an exact input amount for a maximum possible output amount
+    /// @param amountIn The exact amount of input tokens
+    /// @param amountOutMin The minimum acceptable amount of output tokens
+    /// @param path Array of token addresses representing the routing path
+    /// @param to The recipient of the output tokens
+    /// @param deadline The transaction deadline
+    /// @return amounts Array containing calculated amounts at each step
     function swapExactTokensForTokens(
         uint amountIn,
         uint amountOutMin,
@@ -132,6 +179,13 @@ contract DexRouter {
         _swap(amounts, path, to);
     }
 
+    /// @notice Swaps a variable input amount to receive an exact output amount
+    /// @param amountOut The exact amount of output tokens
+    /// @param amountInMax The maximum acceptable amount of input tokens
+    /// @param path Array of token addresses representing the routing path
+    /// @param to The recipient of the output tokens
+    /// @param deadline The transaction deadline
+    /// @return amounts Array containing calculated amounts at each step
     function swapTokensForExactTokens(
         uint amountOut,
         uint amountInMax,
@@ -149,22 +203,45 @@ contract DexRouter {
    
     // **** LIBRARY FUNCTIONS ****
 
+    /// @notice Provides quote calculation
+    /// @param amountA Amount of tokenA
+    /// @param reserveA Reserve of tokenA
+    /// @param reserveB Reserve of tokenB
+    /// @return amountB Equivalent amount of tokenB
     function quote(uint amountA, uint reserveA, uint reserveB) public pure virtual returns (uint amountB) {
         return DexLibrary.quote(amountA, reserveA, reserveB);
     }
 
+    /// @notice Calculates the maximum output amount for a given input amount
+    /// @param amountIn Amount of the input token
+    /// @param reserveIn Reserve of the input token
+    /// @param reserveOut Reserve of the output token
+    /// @return amountOut Maximum amount of the output token
     function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut) public pure returns (uint amountOut) {
         return DexLibrary.getAmountOut(amountIn, reserveIn, reserveOut);
     }
 
+    /// @notice Calculates the required input amount for a given output amount
+    /// @param amountOut Desired amount of the output token
+    /// @param reserveIn Reserve of the input token
+    /// @param reserveOut Reserve of the output token
+    /// @return amountIn Required amount of the input token
     function getAmountIn(uint amountOut, uint reserveIn, uint reserveOut) public pure returns (uint amountIn) {
         return DexLibrary.getAmountIn(amountOut, reserveIn, reserveOut);
     }
 
+    /// @notice Calculates the output amounts for a given input amount across a path
+    /// @param amountIn Initial input amount
+    /// @param path Array of token addresses representing the routing path
+    /// @return amounts Array containing calculated amounts at each step
     function getAmountsOut(uint amountIn, address[] memory path) public view returns (uint[] memory amounts) {
         return DexLibrary.getAmountsOut(factory, amountIn, path);
     }
 
+    /// @notice Calculates the required input amounts for a given output amount across a path
+    /// @param amountOut Desired final output amount
+    /// @param path Array of token addresses representing the routing path
+    /// @return amounts Array containing calculated amounts at each step
     function getAmountsIn(uint amountOut, address[] memory path) public view returns (uint[] memory amounts) {
         return DexLibrary.getAmountsIn(factory, amountOut, path);
     }

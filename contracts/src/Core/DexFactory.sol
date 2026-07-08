@@ -5,11 +5,17 @@ import {DexPair} from "./DexPair.sol";
 import {IDexFactory} from "./interfaces/IDexFactory.sol";
 import {IDexPair} from "./interfaces/IDexPair.sol";
 
+/// @title DexFactory
+/// @notice Core factory contract for deploying DEX pairs
 contract DexFactory is IDexFactory {
+    /// @notice Address receiving the protocol fee
     address public feeTo;
+    /// @notice Address authorized to set feeTo
     address public immutable feeToSetter;
 
+    /// @notice Mapping from token pair to their pair address
     mapping(address => mapping(address => address)) public getPair;
+    /// @notice Array of all created pair addresses
     address[] public allPairs;
 
     error IdenticalAddresses();
@@ -17,15 +23,22 @@ contract DexFactory is IDexFactory {
     error TokenPairExists();
     error Forbidden();
 
-
+    /// @notice Constructor for the factory
+    /// @param _feeToSetter The initial feeToSetter address
     constructor(address _feeToSetter) {
         feeToSetter = _feeToSetter;
     }
 
+    /// @notice Returns the total number of pairs created
+    /// @return The length of the allPairs array
     function allPairsLength() external view returns (uint){
         return allPairs.length;
     }
 
+    /// @notice Creates a new pair for the given tokens
+    /// @param tokenA The first token
+    /// @param tokenB The second token
+    /// @return pair The address of the created pair
     function createPair(address tokenA , address tokenB) external returns (address pair){
         if(tokenA == tokenB) revert IdenticalAddresses();
 
@@ -46,9 +59,10 @@ contract DexFactory is IDexFactory {
 
     }
 
+    /// @notice Sets the feeTo address
+    /// @param _feeTo The new feeTo address
     function setFeeTo(address _feeTo) external{
         if(msg.sender != feeToSetter) revert Forbidden(); 
         feeTo = _feeTo;
     }
 }
-

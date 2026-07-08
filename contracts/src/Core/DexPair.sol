@@ -11,14 +11,18 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IDexCallee} from "./interfaces/IDexCallee.sol";
 
-
+/// @title DexPair
+/// @notice Implements the core DEX pair functionality for managing liquidity and swaps
 contract DexPair is IDexPair , ERC20 , ReentrancyGuard {
 
     using UQ112x112 for uint224;
     using SafeERC20 for IERC20;
 
+    /// @notice Address of token0
     address public token0;
+    /// @notice Address of token1
     address public token1;
+    /// @notice Factory address that created this pair
     address public immutable factory;
 
     uint112 private reserve0;
@@ -26,10 +30,14 @@ contract DexPair is IDexPair , ERC20 , ReentrancyGuard {
 
     uint32 private blockTimeStampLast;
 
+    /// @notice Cumulative price of token0
     uint public price0CumulativeLast;
+    /// @notice Cumulative price of token1
     uint public price1CumulativeLast;
+    /// @notice K invariant of the pair from the last interaction
     uint public kLast;
 
+    /// @notice Minimum liquidity permanently locked
     uint public constant MINIMUM_LIQUIDITY = 10**3;
 
     error AlreadyInitialized();
@@ -43,16 +51,24 @@ contract DexPair is IDexPair , ERC20 , ReentrancyGuard {
     error InvalidAddress();
     error InvariantError();
 
+    /// @notice Retrieves the current reserves and block timestamp
+    /// @return _reserve0 Reserve of token0
+    /// @return _reserve1 Reserve of token1
+    /// @return _blockTimeStampLast Timestamp of last interaction
     function getReserve() public view returns(uint112 _reserve0 , uint112 _reserve1 , uint32 _blockTimeStampLast){
         _reserve0 = reserve0;
         _reserve1 = reserve1;
         _blockTimeStampLast = blockTimeStampLast;
     }
 
+    /// @notice Constructs the pair contract
     constructor() {
         factory = msg.sender;
     }
 
+    /// @notice Initializes the token pair
+    /// @param _token0 Address of the first token
+    /// @param _token1 Address of the second token
     function initialise(address _token0, address _token1) external {
 
         if(msg.sender != factory) revert Forbidden();
@@ -62,6 +78,10 @@ contract DexPair is IDexPair , ERC20 , ReentrancyGuard {
         token1 = _token1;
     }
 
+    /// @notice Mints protocol fees
+    /// @param _reserve0 Reserve of token0
+    /// @param _reserve1 Reserve of token1
+    /// @return feeOn Boolean indicating if the fee is turned on
     function mintFee(uint112 _reserve0 , uint112 _reserve1) private returns(bool feeOn){
 
         address feeTo = IDexFactory(factory).feeTo();
@@ -87,6 +107,11 @@ contract DexPair is IDexPair , ERC20 , ReentrancyGuard {
         }
     }
 
+    /// @notice Updates the reserves and, on the first call per block, price accumulators
+    /// @param balance0 Balance of token0
+    /// @param balance1 Balance of token1
+    /// @param _reserve0 Reserve of token0
+    /// @param _reserve1 Reserve of token1
     function update(uint balance0 , uint balance1 , uint112 _reserve0 , uint112 _reserve1) private{
         if(balance0 > type(uint112).max || balance1 > type(uint112).max) revert Overflow();
         uint32 blockTimeStamp = uint32(block.timestamp % 2**32);
@@ -106,6 +131,9 @@ contract DexPair is IDexPair , ERC20 , ReentrancyGuard {
         emit Sync(reserve0 , reserve1);
     } 
 
+    /// @notice Mints liquidity tokens to the specified address
+    /// @param to The recipient address
+    /// @return liquidity The amount of liquidity minted
     function mint(address to) external nonReentrant returns(uint liquidity){
         (uint112 _reserve0 , uint112 _reserve1,) = getReserve();
         
@@ -137,6 +165,10 @@ contract DexPair is IDexPair , ERC20 , ReentrancyGuard {
         emit Mint(msg.sender , amount0 , amount1);
     }  
 
+    /// @notice Burns liquidity tokens to withdraw underlying tokens
+    /// @param to The recipient address
+    /// @return amount0 The amount of token0 withdrawn
+    /// @return amount1 The amount of token1 withdrawn
     function burn(address to)external nonReentrant returns(uint amount0 , uint amount1){
         (uint112 _reserve0 , uint112 _reserve1,) = getReserve();
 
@@ -168,6 +200,11 @@ contract DexPair is IDexPair , ERC20 , ReentrancyGuard {
 
     }
 
+    /// @notice Swaps tokens
+    /// @param amount0Out The desired amount of token0 out
+    /// @param amount1Out The desired amount of token1 out
+    /// @param to The recipient address
+    /// @param data Data for flash swaps
     function swap(uint amount0Out , uint amount1Out , address to , bytes calldata data) external nonReentrant {
         if(amount0Out == 0 && amount1Out == 0) revert Insufficient_OutputAmount();
         (uint112 _reserve0 , uint112 _reserve1,) = getReserve();
@@ -205,10 +242,14 @@ contract DexPair is IDexPair , ERC20 , ReentrancyGuard {
         emit Swap(msg.sender , amount0In , amount1In , amount0Out , amount1Out , to);
     }
 
+    /// @notice Returns the token name
+    /// @return The token name
     function name() public pure override returns (string memory) {
         return "DexPair LP Token";
     }
 
+    /// @notice Returns the token symbol
+    /// @return The token symbol
     function symbol() public pure override returns (string memory) {
         return "DEX-LP";
     }
