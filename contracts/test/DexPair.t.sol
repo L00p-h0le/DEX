@@ -310,4 +310,54 @@ contract DexPairTest is Test {
         pair.swap(0, 5 ether, address(token1), "");
     }
 
+    function testFuzz_MintInitialLiquidity(uint96 amount0, uint96 amount1) public {
+        vm.assume(amount0 > pair.MINIMUM_LIQUIDITY());
+        vm.assume(amount1 > pair.MINIMUM_LIQUIDITY());
+        vm.assume(amount0 <= 1000 ether);
+        vm.assume(amount1 <= 1000 ether);
+
+        vm.startPrank(alice);
+
+        token0.transfer(address(pair), amount0);
+        token1.transfer(address(pair), amount1);
+
+        uint liquidity = pair.mint(alice);
+
+        vm.stopPrank();
+
+        assertGt(liquidity, 0);
+
+        (uint112 reserve0, uint112 reserve1,) = pair.getReserve();
+
+        assertEq(reserve0, amount0);
+        assertEq(reserve1, amount1);
+        assertEq(pair.balanceOf(alice), liquidity);
+    }
+
+    function testFuzz_SwapMaintainsKInvariant(uint96 amountIn) public {
+        vm.assume(amountIn > 0);
+        vm.assume(amountIn < 1000 ether);
+        _addInitialLiquidity();
+
+        (uint112 reserve0Before, uint112 reserve1Before,) = pair.getReserve();
+        uint oldK = uint(reserve0Before) * uint(reserve1Before);
+
+        token0.mint(address(this), amountIn);
+        token0.transfer(address(pair), amountIn);
+
+        uint amountInWithFee = uint(amountIn) * 997;
+        uint numerator = amountInWithFee * uint(reserve1Before);
+        uint denominator = (uint(reserve0Before) * 1000) + amountInWithFee;
+        uint maxAmountOut = numerator / denominator;
+        
+        vm.assume(maxAmountOut > 0);
+
+        pair.swap(0, maxAmountOut, address(this), "");
+
+        (uint112 reserve0After, uint112 reserve1After,) = pair.getReserve();
+        uint newK = uint(reserve0After) * uint(reserve1After);
+
+        assertGe(newK, oldK);
+    }
+
 }
