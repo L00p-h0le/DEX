@@ -65,7 +65,7 @@ contract DexPairTest is Test {
 
         pair.mint(address(this));
 }
-
+   
     function testMintInitialLiquidity() public {
 
         vm.startPrank(alice);
