@@ -10,6 +10,7 @@ export function useERC20Balance(tokenAddress?: Address, owner?: Address) {
     args: owner ? [owner] as const : undefined,
     query: {
       enabled: !!tokenAddress && !!owner,
+      refetchInterval: 3000,
     }
   });
 }
@@ -22,6 +23,7 @@ export function useERC20Allowance(tokenAddress?: Address, owner?: Address, spend
     args: owner && spender ? [owner, spender] as const : undefined,
     query: {
       enabled: !!tokenAddress && !!owner && !!spender,
+      refetchInterval: 3000,
     }
   });
 }

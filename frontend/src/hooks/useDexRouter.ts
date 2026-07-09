@@ -18,6 +18,7 @@ export function useAmountsOut(amountIn: bigint, path?: Address[]) {
     args: path ? [amountIn, path] as const : undefined,
     query: {
       enabled: !!routerAddress && !!path && path.length >= 2 && amountIn > 0n,
+      refetchInterval: 3000,
     }
   });
 }

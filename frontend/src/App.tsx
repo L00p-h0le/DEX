@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Toaster } from 'react-hot-toast';
 import { Layout } from './components/Layout';
 import { SwapView } from './views/SwapView';
 import { LiquidityView } from './views/LiquidityView';
@@ -8,6 +9,7 @@ function App() {
 
   return (
     <Layout>
+      <Toaster position="bottom-right" />
       <div className="flex justify-center mb-8 gap-4">
         <button
           className={`neo-box px-6 py-2 font-black uppercase text-xl transition-all ${

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 import { useAccount } from 'wagmi';
 import { parseUnits, isAddress } from 'viem';
 import type { Address } from 'viem';
@@ -6,7 +7,7 @@ import { TokenInput } from '../components/TokenInput';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { useDexRouterAddress, useAddLiquidity, useRemoveLiquidity } from '../hooks/useDexRouter';
-import { useERC20Allowance, useERC20Approve } from '../hooks/useERC20';
+import { useERC20Allowance, useERC20Approve, useERC20Balance } from '../hooks/useERC20';
 import { usePairAddress } from '../hooks/useDexFactory';
 
 export function LiquidityView() {
@@ -61,21 +62,37 @@ function AddLiquidity({ account }: { account?: Address }) {
 
   const { approve: approveA, isPending: isApproveAPending, isSuccess: isApproveASuccess } = useERC20Approve(isAddress(tokenA) ? (tokenA as Address) : undefined);
   const { approve: approveB, isPending: isApproveBPending, isSuccess: isApproveBSuccess } = useERC20Approve(isAddress(tokenB) ? (tokenB as Address) : undefined);
+
+  const { data: balanceA } = useERC20Balance(isAddress(tokenA) ? (tokenA as Address) : undefined, account);
+  const { data: balanceB } = useERC20Balance(isAddress(tokenB) ? (tokenB as Address) : undefined, account);
   
   useEffect(() => { if (isApproveASuccess) refetchA(); }, [isApproveASuccess, refetchA]);
   useEffect(() => { if (isApproveBSuccess) refetchB(); }, [isApproveBSuccess, refetchB]);
 
-  const { addLiquidity, isPending: isAddPending } = useAddLiquidity();
+  const { addLiquidity, isPending: isAddPending, isSuccess: isAddSuccess } = useAddLiquidity();
 
-  const handleAdd = () => {
+  useEffect(() => {
+    if (isAddSuccess) {
+      toast.success('Liquidity added!');
+      setAmountA('');
+      setAmountB('');
+    }
+  }, [isAddSuccess]);
+
+  const handleAdd = async () => {
     if (!account || !isAddress(tokenA) || !isAddress(tokenB)) return;
     const deadline = BigInt(Math.floor(Date.now() / 1000) + 20 * 60);
-    // Setting min amounts to 0 for simplicity, in a real app this should be calculated with slippage
-    addLiquidity(tokenA as Address, tokenB as Address, parsedAmountA, parsedAmountB, 0n, 0n, account, deadline);
+    try {
+      await addLiquidity(tokenA as Address, tokenB as Address, parsedAmountA, parsedAmountB, 0n, 0n, account, deadline);
+    } catch (err: any) {
+      toast.error(err.shortMessage || err.message || 'Transaction failed');
+    }
   };
 
   const needsApproveA = allowanceA !== undefined && allowanceA < parsedAmountA;
   const needsApproveB = allowanceB !== undefined && allowanceB < parsedAmountB;
+  const insufficientA = balanceA !== undefined && balanceA < parsedAmountA;
+  const insufficientB = balanceB !== undefined && balanceB < parsedAmountB;
 
   return (
     <div className="flex flex-col gap-4">
@@ -87,6 +104,8 @@ function AddLiquidity({ account }: { account?: Address }) {
         <Button fullWidth disabled variant="secondary">Connect Wallet</Button>
       ) : parsedAmountA === 0n || parsedAmountB === 0n ? (
         <Button fullWidth disabled variant="secondary">Enter amounts</Button>
+      ) : insufficientA || insufficientB ? (
+        <Button fullWidth disabled variant="secondary">Insufficient Balance</Button>
       ) : needsApproveA ? (
         <Button fullWidth onClick={() => approveA(routerAddress, parsedAmountA)} disabled={isApproveAPending}>
           {isApproveAPending ? 'Approving Token A...' : 'Approve Token A'}
@@ -125,7 +144,14 @@ function RemoveLiquidity({ account }: { account?: Address }) {
   
   useEffect(() => { if (isApproveLPSuccess) refetchLP(); }, [isApproveLPSuccess, refetchLP]);
 
-  const { removeLiquidity, isPending: isRemovePending } = useRemoveLiquidity();
+  const { removeLiquidity, isPending: isRemovePending, isSuccess: isRemoveSuccess } = useRemoveLiquidity();
+
+  useEffect(() => {
+    if (isRemoveSuccess) {
+      toast.success('Liquidity removed!');
+      setLiquidity('');
+    }
+  }, [isRemoveSuccess]);
 
   const handleRemove = () => {
     if (!account || !isAddress(tokenA) || !isAddress(tokenB)) return;

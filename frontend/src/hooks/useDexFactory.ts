@@ -19,6 +19,7 @@ export function usePairAddress(tokenA?: Address, tokenB?: Address) {
     args: tokenA && tokenB ? [tokenA, tokenB] as const : undefined,
     query: {
       enabled: !!factoryAddress && !!tokenA && !!tokenB,
+      refetchInterval: 3000,
     }
   });
 }

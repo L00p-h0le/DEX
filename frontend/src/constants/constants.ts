@@ -1,7 +1,7 @@
 export const CONTRACTS = {
     31337: {  // Anvil
-        factory: " 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-        router: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+        factory: "0x68B1D87F95878fE05B998F19b66F4baba5De1aed",
+        router: "0x3Aa5ebB10DC797CAC828524e59A333d0A371443c",
     },
     11155111: {  // Sepolia
         factory: "0x...",
