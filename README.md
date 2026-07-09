@@ -12,6 +12,7 @@ DexProtocol is a fully functional DEX supporting:
 - Multi-hop routing across multiple pairs
 - A TWAP price oracle resistant to flash loan manipulation
 - Flash swap support
+- A neo-brutalist web interface for interacting with the protocol
 
 This is not a line-for-line clone of Uniswap V2. It uses V2's battle-tested economic model and security architecture as the reference design, then implements it with modern Solidity patterns, audited library dependencies, and improved gas efficiency. Every deviation from V2 is intentional and documented.
 
@@ -24,10 +25,11 @@ DEX/
 │   │   ├── Core/       # DexFactory, DexPair
 │   │   └── Periphery/  # DexRouter, DexOracle, DexLibrary
 │   └── test/           # 65 tests — unit, fuzz, invariant
-└── frontend/           # React + wagmi swap UI (in progress)
+└── frontend/           # React + Wagmi swap UI
 ```
 
 → [Full technical documentation and architecture breakdown](./contracts/README.md)
+→ [Frontend documentation](./frontend/README.md)
 
 ## Quick Start
 
@@ -88,9 +90,9 @@ The economic model — constant product formula, 0.3% fee, LP token share math, 
 
 ### Frontend:
 
-- **React** — UI framework
-- **wagmi** — Ethereum React hooks for wallet connection, contract reads/writes, transaction management
-- **viem** — TypeScript Ethereum client (wagmi peer dependency)
+- **React + Vite** — UI framework and bundler
+- **Tailwind CSS v4** — Utility-first styling with neo-brutalist aesthetic
+- **Wagmi v2 & Viem** — Ethereum React hooks for wallet connection and contract interactions
 
 ## Build Status
 
@@ -103,8 +105,8 @@ The economic model — constant product formula, 0.3% fee, LP token share math, 
 | DexLibrary | ✅ Complete |
 | Unit + Fuzz + Invariant Tests | ✅ 65/65 passing |
 | NatSpec Documentation | ✅ Complete |
-| Frontend — Swap UI | 🔨 In progress |
-| Frontend — Liquidity UI | 🔨 In progress |
+| Frontend — Swap UI | ✅ Complete |
+| Frontend — Liquidity UI | ✅ Complete |
 | Testnet Deployment | 🔨 In progress |
 
 ## References
