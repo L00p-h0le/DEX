@@ -110,8 +110,7 @@ The economic model — constant product formula, 0.3% fee, LP token share math, 
 ## References
 
 - [Uniswap V2 Whitepaper](https://uniswap.org/whitepaper.pdf)
-- RareSkills Uniswap V2 Deep Dive — Module 5
-- RareSkills Uniswap V2 Build Checklist
+- [RareSkills Uniswap V2 Build Checklist](https://rareskills.io/post/build-your-own-uniswap)
 - [Uniswap V2 Core Source](https://github.com/Uniswap/v2-core)
 - [Uniswap V2 Periphery Source](https://github.com/Uniswap/v2-periphery)
 
