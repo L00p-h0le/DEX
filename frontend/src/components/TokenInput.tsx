@@ -8,6 +8,7 @@ interface TokenInputProps {
   onAmountChange: (val: string) => void;
   onAddressChange: (val: string) => void;
   disabled?: boolean;
+  balance?: string;
 }
 
 export function TokenInput({
@@ -17,12 +18,20 @@ export function TokenInput({
   onAmountChange,
   onAddressChange,
   disabled = false,
+  balance,
 }: TokenInputProps) {
   return (
     <Card className="flex flex-col gap-2 mb-4 bg-[#f3f3f3]">
-      <label className="text-sm font-bold uppercase tracking-widest text-gray-500">
-        {label}
-      </label>
+      <div className="flex justify-between items-center">
+        <label className="text-sm font-bold uppercase tracking-widest text-gray-500">
+          {label}
+        </label>
+        {balance && (
+          <span className="text-xs font-bold text-gray-500 uppercase">
+            Bal: {balance}
+          </span>
+        )}
+      </div>
       <div className="flex gap-4 items-center">
         <input
           type="number"

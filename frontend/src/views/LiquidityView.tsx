@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { useAccount } from 'wagmi';
+import { useAccount, useConnect } from 'wagmi';
 import { parseUnits, formatUnits, isAddress } from 'viem';
 import type { Address } from 'viem';
 import { TokenInput } from '../components/TokenInput';
 import { AddressInput } from '../components/AddressInput';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
+import { formatDisplayBalance } from '../utils/format';
 import { useDexRouterAddress, useAddLiquidity, useRemoveLiquidity } from '../hooks/useDexRouter';
 import { useERC20Allowance, useERC20Approve, useERC20Balance } from '../hooks/useERC20';
 import { usePairAddress, usePairData } from '../hooks/useDexFactory';
@@ -62,6 +63,7 @@ export function LiquidityView() {
 }
 
 function AddLiquidity({ account, deadlineMinutes }: { account?: Address, deadlineMinutes: number }) {
+  const { connectors, connect } = useConnect();
   const [tokenA, setTokenA] = useState('');
   const [tokenB, setTokenB] = useState('');
   const [amountA, setAmountA] = useState('');
@@ -173,15 +175,29 @@ function AddLiquidity({ account, deadlineMinutes }: { account?: Address, deadlin
 
   return (
     <div className="flex flex-col gap-4">
-      <TokenInput label="Token A" amount={amountA} onAmountChange={(v) => { setAmountA(v); setLastChanged('A'); }} address={tokenA} onAddressChange={setTokenA} />
+      <TokenInput 
+        label="Token A" 
+        amount={amountA} 
+        onAmountChange={(v) => { setAmountA(v); setLastChanged('A'); }} 
+        address={tokenA} 
+        onAddressChange={setTokenA} 
+        balance={balanceA !== undefined ? formatDisplayBalance(balanceA) : undefined}
+      />
       <div className="text-center font-black text-2xl">+</div>
-      <TokenInput label="Token B" amount={amountB} onAmountChange={(v) => { setAmountB(v); setLastChanged('B'); }} address={tokenB} onAddressChange={setTokenB} />
+      <TokenInput 
+        label="Token B" 
+        amount={amountB} 
+        onAmountChange={(v) => { setAmountB(v); setLastChanged('B'); }} 
+        address={tokenB} 
+        onAddressChange={setTokenB} 
+        balance={balanceB !== undefined ? formatDisplayBalance(balanceB) : undefined}
+      />
 
       {account && parsedAmountA > 0n && parsedAmountB > 0n && (
         <div className="flex flex-col gap-2 bg-white border-[3px] border-black p-3 mb-2">
           <div className="flex justify-between items-center">
             <span className="font-bold text-sm uppercase">Est. LP Tokens</span>
-            <span className="font-bold text-sm">{formatUnits(estimatedLP, 18)}</span>
+            <span className="font-bold text-sm">{formatDisplayBalance(estimatedLP)}</span>
           </div>
           <div className="flex justify-between items-center">
             <span className="font-bold text-sm uppercase">Pool Share</span>
@@ -191,7 +207,7 @@ function AddLiquidity({ account, deadlineMinutes }: { account?: Address, deadlin
       )}
 
       {!account ? (
-        <Button fullWidth disabled variant="secondary">Connect Wallet</Button>
+        <Button fullWidth onClick={() => connect({ connector: connectors[0] })}>Connect Wallet</Button>
       ) : parsedAmountA === 0n || parsedAmountB === 0n ? (
         <Button fullWidth disabled variant="secondary">Enter amounts</Button>
       ) : insufficientA || insufficientB ? (
@@ -214,6 +230,7 @@ function AddLiquidity({ account, deadlineMinutes }: { account?: Address, deadlin
 }
 
 function RemoveLiquidity({ account, deadlineMinutes }: { account?: Address, deadlineMinutes: number }) {
+  const { connectors, connect } = useConnect();
   const [tokenA, setTokenA] = useState('');
   const [tokenB, setTokenB] = useState('');
   const [liquidity, setLiquidity] = useState('');
@@ -303,7 +320,7 @@ function RemoveLiquidity({ account, deadlineMinutes }: { account?: Address, dead
       <div className="mt-2">
         <div className="flex justify-between items-center mb-1">
           <label className="text-sm font-bold uppercase tracking-widest text-gray-500 block">LP Tokens to Remove</label>
-          {account && <span className="text-xs font-bold uppercase">Balance: {lpBalance ? parseFloat(formatUnits(lpBalance, 18)).toFixed(4) : '0.0000'}</span>}
+          {account && <span className="text-xs font-bold uppercase">Balance: {lpBalance !== undefined ? formatDisplayBalance(lpBalance) : '0.0000'}</span>}
         </div>
         <input type="number" min="0" className="neo-input w-full text-2xl font-bold bg-white mb-2" placeholder="0.0" value={liquidity} onChange={(e) => setLiquidity(e.target.value)} />
         <div className="flex gap-2 mb-4">
@@ -317,17 +334,17 @@ function RemoveLiquidity({ account, deadlineMinutes }: { account?: Address, dead
         <div className="flex flex-col gap-2 bg-white border-[3px] border-black p-3 mb-4">
           <div className="flex justify-between items-center">
             <span className="font-bold text-sm uppercase">Est. Token A</span>
-            <span className="font-bold text-sm">{parseFloat(formatUnits(estA, 18)).toFixed(6)}</span>
+            <span className="font-bold text-sm">{formatDisplayBalance(estA)}</span>
           </div>
           <div className="flex justify-between items-center">
             <span className="font-bold text-sm uppercase">Est. Token B</span>
-            <span className="font-bold text-sm">{parseFloat(formatUnits(estB, 18)).toFixed(6)}</span>
+            <span className="font-bold text-sm">{formatDisplayBalance(estB)}</span>
           </div>
         </div>
       )}
 
       {!account ? (
-        <Button fullWidth disabled variant="secondary">Connect Wallet</Button>
+        <Button fullWidth onClick={() => connect({ connector: connectors[0] })}>Connect Wallet</Button>
       ) : parsedLiquidity === 0n ? (
         <Button fullWidth disabled variant="secondary">Enter amount</Button>
       ) : !pairAddress || pairAddress === '0x0000000000000000000000000000000000000000' ? (

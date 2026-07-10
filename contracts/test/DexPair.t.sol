@@ -55,7 +55,7 @@ contract DexPairTest is Test {
 
         vm.stopPrank();
     }
-    
+
     function _addInitialLiquidity() internal {
         token0.mint(address(this), 100 ether);
         token1.mint(address(this), 100 ether);

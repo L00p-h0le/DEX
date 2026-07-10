@@ -675,3 +675,24 @@ export const PAIR_ABI = [
     "stateMutability": "view"
   }
 ] as const;
+
+export const MOCK_ERC20_ABI = [
+  {
+    "type": "function",
+    "name": "mint",
+    "inputs": [
+      {
+        "name": "to",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "amount",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  }
+] as const;

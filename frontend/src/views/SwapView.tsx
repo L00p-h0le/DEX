@@ -1,17 +1,19 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { useAccount } from 'wagmi';
+import { useAccount, useConnect } from 'wagmi';
 import { parseUnits, formatUnits, isAddress } from 'viem';
 import type { Address } from 'viem';
 import { TokenInput } from '../components/TokenInput';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
+import { formatDisplayBalance } from '../utils/format';
 import { useDexRouterAddress, useAmountsOut, useSwap } from '../hooks/useDexRouter';
 import { useERC20Allowance, useERC20Approve, useERC20Balance } from '../hooks/useERC20';
 import { usePairAddress } from '../hooks/useDexFactory';
 
 export function SwapView() {
   const { address: account } = useAccount();
+  const { connectors, connect } = useConnect();
   const [tokenIn, setTokenIn] = useState('');
   const [tokenOut, setTokenOut] = useState('');
   const [amountIn, setAmountIn] = useState('');
@@ -51,6 +53,16 @@ export function SwapView() {
   const { data: balanceOut } = useERC20Balance(
     isAddress(tokenOut) ? (tokenOut as Address) : undefined,
     pairAddress as Address | undefined
+  );
+
+  const { data: userBalanceIn } = useERC20Balance(
+    isAddress(tokenIn) ? (tokenIn as Address) : undefined,
+    account
+  );
+
+  const { data: userBalanceOut } = useERC20Balance(
+    isAddress(tokenOut) ? (tokenOut as Address) : undefined,
+    account
   );
 
   const routerAddress = useDexRouterAddress();
@@ -149,8 +161,8 @@ export function SwapView() {
         <div className="flex justify-between items-center bg-white border-[3px] border-black p-3 mb-6">
           <span className="font-bold text-sm uppercase">Pool Liquidity</span>
           <div className="flex gap-4 text-xs font-mono font-bold">
-            <span>In: {isAddress(tokenIn) && isAddress(tokenOut) && pairAddress && pairAddress !== '0x0000000000000000000000000000000000000000' && balanceIn !== undefined ? parseFloat(formatUnits(balanceIn, 18)).toFixed(4) : '-'}</span>
-            <span>Out: {isAddress(tokenIn) && isAddress(tokenOut) && pairAddress && pairAddress !== '0x0000000000000000000000000000000000000000' && balanceOut !== undefined ? parseFloat(formatUnits(balanceOut, 18)).toFixed(4) : '-'}</span>
+            <span>In: {isAddress(tokenIn) && isAddress(tokenOut) && pairAddress && pairAddress !== '0x0000000000000000000000000000000000000000' && balanceIn !== undefined ? formatDisplayBalance(balanceIn) : '-'}</span>
+            <span>Out: {isAddress(tokenIn) && isAddress(tokenOut) && pairAddress && pairAddress !== '0x0000000000000000000000000000000000000000' && balanceOut !== undefined ? formatDisplayBalance(balanceOut) : '-'}</span>
           </div>
         </div>
         
@@ -161,6 +173,7 @@ export function SwapView() {
             onAmountChange={setAmountIn}
             address={tokenIn}
             onAddressChange={setTokenIn}
+            balance={userBalanceIn !== undefined ? formatDisplayBalance(userBalanceIn) : undefined}
           />
 
           <div className="absolute left-1/2 top-[calc(50%-8px)] -translate-x-1/2 -translate-y-1/2 z-10">
@@ -184,6 +197,7 @@ export function SwapView() {
             address={tokenOut}
             onAddressChange={setTokenOut}
             disabled={true}
+            balance={userBalanceOut !== undefined ? formatDisplayBalance(userBalanceOut) : undefined}
           />
         </div>
 
@@ -197,7 +211,7 @@ export function SwapView() {
         )}
 
         {!account ? (
-          <Button fullWidth disabled variant="secondary">
+          <Button fullWidth onClick={() => connect({ connector: connectors[0] })}>
             Connect Wallet
           </Button>
         ) : parsedAmountIn === 0n ? (
@@ -212,7 +226,7 @@ export function SwapView() {
           <Button fullWidth disabled variant="secondary">
             Insufficient Liquidity
           </Button>
-        ) : balanceIn !== undefined && parsedAmountIn > balanceIn ? (
+        ) : userBalanceIn !== undefined && parsedAmountIn > userBalanceIn ? (
           <Button fullWidth disabled variant="secondary">
             Insufficient Balance
           </Button>

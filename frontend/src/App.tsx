@@ -3,9 +3,10 @@ import { Toaster } from 'react-hot-toast';
 import { Layout } from './components/Layout';
 import { SwapView } from './views/SwapView';
 import { LiquidityView } from './views/LiquidityView';
+import { FaucetView } from './views/FaucetView';
 
 function App() {
-  const [activeTab, setActiveTab] = useState<'swap' | 'liquidity'>('swap');
+  const [activeTab, setActiveTab] = useState<'swap' | 'liquidity' | 'faucet'>('swap');
 
   return (
     <Layout>
@@ -31,6 +32,16 @@ function App() {
         >
           Liquidity
         </button>
+        <button
+          className={`neo-box px-6 py-2 font-black uppercase text-xl transition-all ${
+            activeTab === 'faucet' 
+              ? 'bg-[#FF90E8] neo-shadow-heavy translate-y-[-4px] translate-x-[-4px]' 
+              : 'bg-white hover:bg-gray-50'
+          }`}
+          onClick={() => setActiveTab('faucet')}
+        >
+          Faucet
+        </button>
       </div>
 
       <div style={{ display: activeTab === 'swap' ? 'block' : 'none' }}>
@@ -38,6 +49,9 @@ function App() {
       </div>
       <div style={{ display: activeTab === 'liquidity' ? 'block' : 'none' }}>
         <LiquidityView />
+      </div>
+      <div style={{ display: activeTab === 'faucet' ? 'block' : 'none' }}>
+        <FaucetView />
       </div>
     </Layout>
   );

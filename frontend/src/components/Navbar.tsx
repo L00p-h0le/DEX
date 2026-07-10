@@ -1,5 +1,5 @@
 import { useAccount, useConnect, useDisconnect, useBalance } from 'wagmi';
-import { formatUnits } from 'viem';
+import { formatDisplayBalance } from '../utils/format';
 
 export function Navbar() {
   const { address, isConnected } = useAccount();
@@ -24,7 +24,7 @@ export function Navbar() {
         {isConnected ? (
           <div className="flex gap-4 items-center">
             <div className="neo-box px-4 py-2 font-mono text-sm hidden md:block">
-              {balance ? `${parseFloat(formatUnits(balance.value, balance.decimals)).toFixed(4)} ${balance.symbol}` : '0.0000 ETH'}
+              {balance ? `${formatDisplayBalance(balance.value, balance.decimals)} ${balance.symbol}` : '0.0000 ETH'}
             </div>
             <button
               onClick={() => disconnect()}
