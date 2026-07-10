@@ -1,4 +1,4 @@
-# DexProtocol — A Uniswap V2-Style DEX
+# UNIDEX Contracts — A Uniswap V2-Style DEX
 
 A fully functional decentralized exchange built from scratch in modern Solidity (0.8.20+), following Uniswap V2's battle-tested constant product AMM architecture with significant implementation improvements.
 Built as part of a focused DeFi engineering portfolio targeting smart contract security roles.
