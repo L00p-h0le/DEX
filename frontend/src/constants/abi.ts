@@ -610,3 +610,68 @@ export const ROUTER_ABI = [
     "inputs": []
   }
 ] as const;
+
+export const PAIR_ABI = [
+  {
+    "type": "function",
+    "name": "getReserve",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "_reserve0",
+        "type": "uint112",
+        "internalType": "uint112"
+      },
+      {
+        "name": "_reserve1",
+        "type": "uint112",
+        "internalType": "uint112"
+      },
+      {
+        "name": "_blockTimestampLast",
+        "type": "uint32",
+        "internalType": "uint32"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "totalSupply",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "token0",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "token1",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  }
+] as const;

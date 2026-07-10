@@ -16,6 +16,15 @@ export function SwapView() {
   const [tokenOut, setTokenOut] = useState('');
   const [amountIn, setAmountIn] = useState('');
   const [slippage, setSlippage] = useState(0.5);
+  const [deadlineMinutes, setDeadlineMinutes] = useState(20);
+  
+  useEffect(() => {
+    if (!account) {
+      setTokenIn('');
+      setTokenOut('');
+      setAmountIn('');
+    }
+  }, [account]);
   
   const [debouncedAmountIn, setDebouncedAmountIn] = useState('');
   useEffect(() => {
@@ -61,6 +70,16 @@ export function SwapView() {
     }
   }, [isApproveSuccess, refetchAllowance]);
 
+  let priceImpact = 0;
+  if (parsedAmountIn > 0n && amountsOutData && balanceIn && balanceOut && balanceIn > 0n) {
+    const expectedOut = amountsOutData[1];
+    const idealAmountOut = (parsedAmountIn * balanceOut) / balanceIn;
+    if (idealAmountOut > 0n) {
+      priceImpact = Number(((idealAmountOut - expectedOut) * 10000n) / idealAmountOut) / 100;
+      if (priceImpact < 0) priceImpact = 0;
+    }
+  }
+
   const { swap, isPending: isSwapPending, isSuccess: isSwapSuccess } = useSwap();
   
   useEffect(() => {
@@ -80,7 +99,7 @@ export function SwapView() {
     const slippageMultiplier = BigInt(Math.floor((100 - slippage) * 100));
     const minAmountOut = (expectedOut * slippageMultiplier) / 10000n;
     
-    const deadline = BigInt(Math.floor(Date.now() / 1000) + 20 * 60);
+    const deadline = BigInt(Math.floor(Date.now() / 1000) + deadlineMinutes * 60);
     try {
       await swap(parsedAmountIn, minAmountOut, path, account, deadline);
     } catch (err: any) {
@@ -101,17 +120,29 @@ export function SwapView() {
       <Card heavyShadow className="bg-[#FFF4E0]">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-3xl font-black uppercase tracking-tight">Swap</h2>
-          <div className="flex gap-2 items-center">
-             <span className="text-xs font-bold uppercase">Slippage</span>
-             <select 
-                className="neo-input py-1 px-2 text-sm bg-white" 
-                value={slippage} 
-                onChange={(e) => setSlippage(Number(e.target.value))}
-             >
-                <option value={0.1}>0.1%</option>
-                <option value={0.5}>0.5%</option>
-                <option value={1.0}>1.0%</option>
-             </select>
+          <div className="flex gap-4 items-center">
+             <div className="flex gap-2 items-center">
+                <span className="text-xs font-bold uppercase">Deadline (m)</span>
+                <input 
+                  type="number" 
+                  min="1" 
+                  className="neo-input py-1 px-2 text-sm bg-white w-16" 
+                  value={deadlineMinutes} 
+                  onChange={(e) => setDeadlineMinutes(Number(e.target.value))} 
+                />
+             </div>
+             <div className="flex gap-2 items-center">
+                <span className="text-xs font-bold uppercase">Slippage</span>
+                <select 
+                   className="neo-input py-1 px-2 text-sm bg-white" 
+                   value={slippage} 
+                   onChange={(e) => setSlippage(Number(e.target.value))}
+                >
+                   <option value={0.1}>0.1%</option>
+                   <option value={0.5}>0.5%</option>
+                   <option value={1.0}>1.0%</option>
+                </select>
+             </div>
           </div>
         </div>
 
@@ -156,6 +187,15 @@ export function SwapView() {
           />
         </div>
 
+        {parsedAmountIn > 0n && amountsOutData && (
+          <div className="flex justify-between items-center bg-white border-[3px] border-black p-3 mb-6">
+            <span className="font-bold text-sm uppercase">Price Impact</span>
+            <span className={`font-bold text-sm ${priceImpact >= 3 ? 'text-red-600' : priceImpact >= 1 ? 'text-orange-500' : 'text-green-600'}`}>
+              {priceImpact.toFixed(2)}%
+            </span>
+          </div>
+        )}
+
         {!account ? (
           <Button fullWidth disabled variant="secondary">
             Connect Wallet
@@ -171,6 +211,10 @@ export function SwapView() {
         ) : isAmountsOutError || !amountsOutData ? (
           <Button fullWidth disabled variant="secondary">
             Insufficient Liquidity
+          </Button>
+        ) : balanceIn !== undefined && parsedAmountIn > balanceIn ? (
+          <Button fullWidth disabled variant="secondary">
+            Insufficient Balance
           </Button>
         ) : needsApproval ? (
           <Button fullWidth onClick={handleApprove} disabled={isApprovePending}>

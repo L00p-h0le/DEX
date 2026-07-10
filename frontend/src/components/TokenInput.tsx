@@ -1,4 +1,5 @@
 import { Card } from './Card';
+import { AddressInput } from './AddressInput';
 
 interface TokenInputProps {
   label: string;
@@ -33,12 +34,10 @@ export function TokenInput({
           className="neo-input flex-1 text-2xl font-bold bg-white"
         />
         <div className="flex-1">
-          <input
-            type="text"
-            placeholder="Token Address (0x...)"
+          <AddressInput
             value={address}
-            onChange={(e) => onAddressChange(e.target.value)}
-            className="neo-input w-full text-sm font-bold"
+            onChange={onAddressChange}
+            placeholder="Token Address (0x...)"
           />
         </div>
       </div>

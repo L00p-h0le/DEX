@@ -33,7 +33,12 @@ function App() {
         </button>
       </div>
 
-      {activeTab === 'swap' ? <SwapView /> : <LiquidityView />}
+      <div style={{ display: activeTab === 'swap' ? 'block' : 'none' }}>
+        <SwapView />
+      </div>
+      <div style={{ display: activeTab === 'liquidity' ? 'block' : 'none' }}>
+        <LiquidityView />
+      </div>
     </Layout>
   );
 }
