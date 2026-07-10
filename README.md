@@ -1,10 +1,10 @@
-# DexProtocol
+# UNIDEX
 
-A decentralized exchange built from scratch in modern Solidity (0.8.20+), implementing Uniswap V2's constant product AMM architecture with deliberate improvements guided by the RareSkills Uniswap V2 Build Checklist.
+A decentralized exchange built from scratch in modern Solidity (0.8.20+), implementing Uniswap V2's constant product AMM architecture with deliberate improvements guided by the RareSkills Uniswap V2 Build Checklist. It features a fully integrated Neo-Brutalist React frontend and is actively deployed on the **Sepolia Testnet**.
 
 ## What is this?
 
-DexProtocol is a fully functional DEX supporting:
+UNIDEX is a fully functional DEX supporting:
 
 - Permissionless token pair creation
 - Liquidity provision and withdrawal
@@ -107,7 +107,7 @@ The economic model — constant product formula, 0.3% fee, LP token share math, 
 | NatSpec Documentation | ✅ Complete |
 | Frontend — Swap UI | ✅ Complete |
 | Frontend — Liquidity UI | ✅ Complete |
-| Testnet Deployment | 🔨 In progress |
+| Testnet Deployment | ✅ Complete (Sepolia) |
 
 ## References
 
