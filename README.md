@@ -9,7 +9,7 @@ UNIDEX is a fully functional DEX supporting:
 - Permissionless token pair creation
 - Liquidity provision and withdrawal
 - Token swaps with slippage and deadline protection
-- Multi-hop routing across multiple pairs
+- Multi-hop routing across multiple pairs (natively supported by the smart contracts via `swapExactTokensForTokens` with full path arrays, though the current frontend UI focuses on direct swaps)
 - A TWAP price oracle resistant to flash loan manipulation
 - Flash swap support
 - A neo-brutalist web interface for interacting with the protocol
