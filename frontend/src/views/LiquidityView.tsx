@@ -322,7 +322,12 @@ function RemoveLiquidity({ account, deadlineMinutes }: { account?: Address, dead
           <label className="text-sm font-bold uppercase tracking-widest text-gray-500 block">LP Tokens to Remove</label>
           {account && <span className="text-xs font-bold uppercase">Balance: {lpBalance !== undefined ? formatDisplayBalance(lpBalance) : '0.0000'}</span>}
         </div>
-        <input type="number" min="0" className="neo-input w-full text-2xl font-bold bg-white mb-2" placeholder="0.0" value={liquidity} onChange={(e) => setLiquidity(e.target.value)} />
+        <input type="text" inputMode="decimal" className="neo-input w-full text-2xl font-bold bg-white mb-2" placeholder="0.0" value={liquidity} onChange={(e) => {
+          const val = e.target.value.replace(/,/g, '.');
+          if (/^\d*\.?\d*$/.test(val)) {
+            setLiquidity(val);
+          }
+        }} />
         <div className="flex gap-2 mb-4">
           {[25, 50, 75, 100].map(pct => (
             <button key={pct} onClick={() => handlePercentage(pct)} className="flex-1 bg-white border-2 border-black neo-shadow-sm text-xs font-bold py-1 hover:bg-gray-100">{pct}%</button>

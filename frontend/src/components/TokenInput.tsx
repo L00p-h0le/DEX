@@ -34,11 +34,16 @@ export function TokenInput({
       </div>
       <div className="flex gap-4 items-center">
         <input
-          type="number"
-          min="0"
+          type="text"
+          inputMode="decimal"
           placeholder="0.0"
           value={amount}
-          onChange={(e) => onAmountChange(e.target.value)}
+          onChange={(e) => {
+            const val = e.target.value.replace(/,/g, '.');
+            if (/^\d*\.?\d*$/.test(val)) {
+              onAmountChange(val);
+            }
+          }}
           disabled={disabled}
           className="neo-input flex-1 text-2xl font-bold bg-white"
         />

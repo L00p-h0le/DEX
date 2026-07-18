@@ -19,7 +19,7 @@ export function SwapView() {
   const [amountIn, setAmountIn] = useState('');
   const [slippage, setSlippage] = useState(0.5);
   const [deadlineMinutes, setDeadlineMinutes] = useState(20);
-  
+
   useEffect(() => {
     if (!account) {
       setTokenIn('');
@@ -27,7 +27,7 @@ export function SwapView() {
       setAmountIn('');
     }
   }, [account]);
-  
+
   const [debouncedAmountIn, setDebouncedAmountIn] = useState('');
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedAmountIn(amountIn), 400);
@@ -75,7 +75,7 @@ export function SwapView() {
   const { approve, isPending: isApprovePending, isSuccess: isApproveSuccess } = useERC20Approve(
     isAddress(tokenIn) ? (tokenIn as Address) : undefined
   );
-  
+
   useEffect(() => {
     if (isApproveSuccess) {
       refetchAllowance();
@@ -93,7 +93,7 @@ export function SwapView() {
   }
 
   const { swap, isPending: isSwapPending, isSuccess: isSwapSuccess } = useSwap();
-  
+
   useEffect(() => {
     if (isSwapSuccess) {
       toast.success('Swap successful!');
@@ -110,7 +110,7 @@ export function SwapView() {
     const expectedOut = amountsOutData[1];
     const slippageMultiplier = BigInt(Math.floor((100 - slippage) * 100));
     const minAmountOut = (expectedOut * slippageMultiplier) / 10000n;
-    
+
     const deadline = BigInt(Math.floor(Date.now() / 1000) + deadlineMinutes * 60);
     try {
       await swap(parsedAmountIn, minAmountOut, path, account, deadline);
@@ -133,39 +133,49 @@ export function SwapView() {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-3xl font-black uppercase tracking-tight">Swap</h2>
           <div className="flex gap-4 items-center">
-             <div className="flex gap-2 items-center">
-                <span className="text-xs font-bold uppercase">Deadline (m)</span>
-                <input 
-                  type="number" 
-                  min="1" 
-                  className="neo-input py-1 px-2 text-sm bg-white w-16" 
-                  value={deadlineMinutes} 
-                  onChange={(e) => setDeadlineMinutes(Number(e.target.value))} 
-                />
-             </div>
-             <div className="flex gap-2 items-center">
-                <span className="text-xs font-bold uppercase">Slippage</span>
-                <select 
-                   className="neo-input py-1 px-2 text-sm bg-white" 
-                   value={slippage} 
-                   onChange={(e) => setSlippage(Number(e.target.value))}
-                >
-                   <option value={0.1}>0.1%</option>
-                   <option value={0.5}>0.5%</option>
-                   <option value={1.0}>1.0%</option>
-                </select>
-             </div>
+            <div className="flex gap-2 items-center">
+              <span className="text-xs font-bold uppercase">Deadline (m)</span>
+              <input
+                type="number"
+                min="1"
+                className="neo-input py-1 px-2 text-sm bg-white w-16"
+                value={deadlineMinutes}
+                onChange={(e) => setDeadlineMinutes(Number(e.target.value))}
+              />
+            </div>
+            <div className="flex gap-2 items-center">
+              <span className="text-xs font-bold uppercase">Slippage</span>
+              <select
+                className="neo-input py-1 px-2 text-sm bg-white"
+                value={slippage}
+                onChange={(e) => setSlippage(Number(e.target.value))}
+              >
+                <option value={0.1}>0.1%</option>
+                <option value={0.5}>0.5%</option>
+                <option value={1.0}>1.0%</option>
+              </select>
+            </div>
           </div>
         </div>
 
-        <div className="flex justify-between items-center bg-white border-[3px] border-black p-3 mb-6">
-          <span className="font-bold text-sm uppercase">Pool Liquidity</span>
-          <div className="flex gap-4 text-xs font-mono font-bold">
-            <span>In: {isAddress(tokenIn) && isAddress(tokenOut) && pairAddress && pairAddress !== '0x0000000000000000000000000000000000000000' && balanceIn !== undefined ? formatDisplayBalance(balanceIn) : '-'}</span>
-            <span>Out: {isAddress(tokenIn) && isAddress(tokenOut) && pairAddress && pairAddress !== '0x0000000000000000000000000000000000000000' && balanceOut !== undefined ? formatDisplayBalance(balanceOut) : '-'}</span>
+        <div className="flex flex-col gap-2 bg-white border-[3px] border-black p-3 mb-6">
+          <div className="flex justify-between items-center">
+            <span className="font-bold text-sm uppercase">Pool Liquidity</span>
+            <div className="flex gap-4 text-xs font-mono font-bold">
+              <span>In: {isAddress(tokenIn) && isAddress(tokenOut) && pairAddress && pairAddress !== '0x0000000000000000000000000000000000000000' && balanceIn !== undefined ? formatDisplayBalance(balanceIn) : '-'}</span>
+              <span>Out: {isAddress(tokenIn) && isAddress(tokenOut) && pairAddress && pairAddress !== '0x0000000000000000000000000000000000000000' && balanceOut !== undefined ? formatDisplayBalance(balanceOut) : '-'}</span>
+            </div>
           </div>
+          {isAddress(tokenIn) && isAddress(tokenOut) && pairAddress && pairAddress !== '0x0000000000000000000000000000000000000000' && balanceIn !== undefined && balanceOut !== undefined && balanceIn > 0n && (
+            <div className="flex justify-between items-center pt-2 border-t-2 border-dashed border-gray-300">
+              <span className="font-bold text-sm uppercase text-gray-500">Swap Rate</span>
+              <div className="text-xs font-mono font-bold">
+                <span>1 In = {(Number(formatUnits(balanceOut, 18)) / Number(formatUnits(balanceIn, 18))).toFixed(6)} Out</span>
+              </div>
+            </div>
+          )}
         </div>
-        
+
         <div className="flex flex-col relative">
           <TokenInput
             label="You Pay"
@@ -177,7 +187,7 @@ export function SwapView() {
           />
 
           <div className="absolute left-1/2 top-[calc(50%-8px)] -translate-x-1/2 -translate-y-1/2 z-10">
-            <button 
+            <button
               onClick={handleSwitchTokens}
               className="w-12 h-12 flex items-center justify-center bg-[#CCFF00] border-[3px] border-black hover:bg-[#b8e600] active:translate-y-1 active:translate-x-1 shadow-[4px_4px_0px_rgba(0,0,0,1)] active:shadow-none transition-all cursor-pointer"
             >
@@ -193,7 +203,7 @@ export function SwapView() {
           <TokenInput
             label="You Receive"
             amount={amountOut}
-            onAmountChange={() => {}}
+            onAmountChange={() => { }}
             address={tokenOut}
             onAddressChange={setTokenOut}
             disabled={true}
